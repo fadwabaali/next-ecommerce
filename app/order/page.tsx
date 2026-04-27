@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Phone, MapPin, MessageCircle, Sparkles, Upload } from "lucide-react";
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One size']
 
@@ -147,170 +148,107 @@ export default function OrderPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-lg mx-auto bg-white rounded-2xl shadow p-8">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-2">Place your order</h1>
-        <p className="text-gray-500 text-sm mb-8">Fill in your details and we'll contact you on WhatsApp</p>
+  <main className="min-h-screen bg-pink-50 flex items-center justify-center px-6">
+    <div className="grid md:grid-cols-2 gap-8 max-w-6xl w-full h-[90vh]">
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      {/* LEFT */}
+      <div className="flex flex-col justify-center space-y-6">
+  
+  {/* Logo */}
+  <div className="flex items-center gap-3">
+    <div className="bg-pink-500 text-white p-2 rounded-xl shadow-md">
+      <Sparkles size={20} />
+    </div>
+    <span className="text-xl font-semibold text-gray-800">
+      Veloura
+    </span>
+  </div>
 
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full name *</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="Your name"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+  <h1 className="text-4xl font-bold text-gray-800 leading-tight">
+    Order Your Look Effortlessly
+  </h1>
 
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone number * <span className="text-gray-400">(Moroccan)</span>
-            </label>
-            <input
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              required
-              placeholder="06XXXXXXXX or 07XXXXXXXX"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+  <p className="text-gray-600">
+    Fill the form and we’ll confirm your order via WhatsApp.
+  </p>
 
-          {/* City */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-            <input
-              name="city"
-              value={form.city}
-              onChange={handleChange}
-              required
-              placeholder="Casablanca, Rabat..."
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+  {/* Contact */}
+  <div className="space-y-3 pt-4">
 
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <input
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="Street, neighborhood..."
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Items */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Items *</label>
-            <textarea
-              name="items"
-              value={form.items}
-              onChange={handleChange}
-              required
-              rows={3}
-              placeholder="Describe what you want to order..."
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
-
-          {/* Image upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Screenshot / image <span className="text-gray-400">(optional, max 5MB)</span>
-            </label>
-
-            {!imagePreview ? (
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">
-                <span className="text-2xl mb-1">📎</span>
-                <span className="text-sm text-gray-500">Click to upload image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-            ) : (
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md hover:bg-red-600"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Size + Color */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Size</label>
-              <select
-                name="size"
-                value={form.size}
-                onChange={handleChange}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="">Select size</option>
-                {SIZE_OPTIONS.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-              <input
-                name="color"
-                value={form.color}
-                onChange={handleChange}
-                placeholder="Black, white..."
-                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows={2}
-              placeholder="Any extra info..."
-              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-          </div>
-
-          {/* Error */}
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-3 rounded-lg text-sm transition-colors"
-          >
-            {loading ? 'Sending...' : 'Submit order'}
-          </button>
-
-        </form>
+    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+      <div className="bg-pink-100 text-pink-600 p-2 rounded-md">
+        <Phone size={16} />
       </div>
-    </main>
+      <span className="text-gray-700 text-sm">+212 6 XX XX XX XX</span>
+    </div>
+
+    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+      <div className="bg-pink-100 text-pink-600 p-2 rounded-md">
+        <MapPin size={16} />
+      </div>
+      <span className="text-gray-700 text-sm">Casablanca</span>
+    </div>
+
+    <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+      <div className="bg-pink-100 text-pink-600 p-2 rounded-md">
+        <MessageCircle size={16} />
+      </div>
+      <span className="text-gray-700 text-sm">Available 24/7</span>
+    </div>
+    </div>
+  </div>
+
+  {/* RIGHT FORM */}
+  <div className="bg-white rounded-2xl shadow-xl p-6 h-[85vh] overflow-y-auto">
+    <form onSubmit={handleSubmit}>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        Place your order
+      </h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input name="name" value={form.name} onChange={handleChange} required placeholder="Full name" className="input text-gray-800 col-span-2" />
+        <input name="phone" value={form.phone} onChange={handleChange} required placeholder="Phone" className="input text-gray-800" />
+        <input name="city" value={form.city} onChange={handleChange} required placeholder="City" className="input text-gray-800" />
+        <input name="address" value={form.address} onChange={handleChange} placeholder="Address" className="input text-gray-800 col-span-2" />
+        <textarea name="items" value={form.items} onChange={handleChange} required placeholder="Items" className="input text-gray-800 col-span-2 h-16 resize-none" />
+        <div className="col-span-2">
+          {!imagePreview ? (
+          <label className="flex items-center justify-center gap-2 w-full h-16 border-2 border-dashed border-pink-200 rounded-lg cursor-pointer hover:border-pink-400 hover:bg-pink-50 transition">
+            <Upload size={16} className="text-pink-500" />
+            <span className="text-sm text-gray-500">Upload image</span>
+            <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+          </label>
+          ) : (
+          <div className="relative">
+            <img src={imagePreview} className="w-full h-24 object-cover rounded-lg border" />
+            <button type="button" onClick={removeImage} className="absolute cursor-pointer top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded">
+              Remove
+            </button>
+          </div>
+        )}
+        </div>
+        <select name="size" value={form.size} onChange={handleChange} className="input text-gray-800">
+          <option value="">Size</option>
+          {SIZE_OPTIONS.map(s => <option key={s}>{s}</option>)}
+        </select>
+        <input name="color" value={form.color} onChange={handleChange} placeholder="Color" className="input text-gray-800" />
+        <textarea name="notes" value={form.notes} onChange={handleChange} placeholder="Notes" className="input text-gray-800 col-span-2 h-12 resize-none" />
+      </div>
+      <div className="space-y-3 mt-4">
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="group relative w-full overflow-hidden cursor-pointer bg-pink-500 text-white py-3 rounded-lg font-medium transition-all duration-300 hover:bg-pink-600 hover:shadow-lg"
+        >
+          <span className="relative z-10">
+          {loading ? 'Sending...' : 'Submit Order'}
+          </span>
+          <span className="absolute top-0 left-[-75%] h-full w-1/2 bg-white/30 skew-x-[-20deg] transition-all duration-700 group-hover:left-[125%]"></span>
+        </button>
+      </div>
+    </form>
+    </div>
+    </div>
+  </main>
   )
 }
