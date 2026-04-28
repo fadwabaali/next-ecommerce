@@ -5,19 +5,20 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, Eye, Trash2, MessageCircle, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
+import { STATUSES, openWhatsApp } from '@/lib/constants'
+import StatusBadge from '../../components/ui/StatusBadge'
+import Button from '../../components/ui/Button'
+import PageHeader from '../../components/layout/PageHeader'
 
 type Order = {
   id: string
   status: string
   total: number | null
   store: string | null
-  notes: string | null
   items: string | null
   created_at: string
   clients: { id: string; name: string; phone: string; city: string } | null
 }
-
-const STATUSES = ['NEW', 'CONTACTED', 'PACKED', 'SENT', 'DELIVERED', 'CANCELED', 'CHANGED']
 
 const STATUS_COLORS: Record<string, string> = {
   NEW:       'bg-blue-100 text-blue-700',
@@ -32,7 +33,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function OrdersPage() {
   const supabase = createClient()
   const searchParams = useSearchParams()
-  const clientFilter = searchParams.get('client') // from clients page "View orders" button
+  const clientFilter = searchParams.get('client')
 
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,24 +46,16 @@ export default function OrdersPage() {
   const [totalValue, setTotalValue] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchOrders()
-  }, [sortDir])
+  useEffect(() => { fetchOrders() }, [sortDir])
 
   async function fetchOrders() {
     setLoading(true)
     const { data } = await supabase
       .from('orders')
-      .select('id, status, total, store, notes, items, created_at, clients(id, name, phone, city)')
+      .select('id, status, total, store, items, created_at, clients(id, name, phone, city)')
       .order('created_at', { ascending: sortDir === 'asc' })
-
     let result = (data as Order[]) || []
-
-    // If coming from clients page with ?client=id
-    if (clientFilter) {
-      result = result.filter(o => o.clients?.id === clientFilter)
-    }
-
+    if (clientFilter) result = result.filter(o => o.clients?.id === clientFilter)
     setOrders(result)
     setLoading(false)
   }
@@ -73,57 +66,34 @@ export default function OrdersPage() {
       .from('orders')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', orderId)
-
-    if (!error) {
-      setOrders(prev => prev.map(o =>
-        o.id === orderId ? { ...o, status: newStatus } : o
-      ))
-    }
+    if (!error) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
     setUpdatingId(null)
   }
 
   async function saveTotal(orderId: string) {
     const parsed = parseFloat(totalValue)
     if (isNaN(parsed)) { setEditingTotal(null); return }
-
     const { error } = await supabase
       .from('orders')
       .update({ total: parsed, updated_at: new Date().toISOString() })
       .eq('id', orderId)
-
-    if (!error) {
-      setOrders(prev => prev.map(o =>
-        o.id === orderId ? { ...o, total: parsed } : o
-      ))
-    }
+    if (!error) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, total: parsed } : o))
     setEditingTotal(null)
     setTotalValue('')
   }
 
   async function deleteOrder(orderId: string) {
     setDeletingId(orderId)
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', orderId)
-
-    if (!error) {
-      setOrders(prev => prev.filter(o => o.id !== orderId))
-    }
+    const { error } = await supabase.from('orders').delete().eq('id', orderId)
+    if (!error) setOrders(prev => prev.filter(o => o.id !== orderId))
     setDeletingId(null)
     setConfirmDelete(null)
   }
 
-  function openWhatsApp(phone: string) {
-    const formatted = phone.startsWith('0') ? '+212' + phone.slice(1) : phone
-    window.open(`https://wa.me/${formatted}`, '_blank')
-  }
-
-  // Filter + search
   const filtered = orders.filter(order => {
     const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter
     const s = search.toLowerCase().trim()
-    const matchesSearch = s === '' ||
+    const matchesSearch = !s ||
       order.clients?.name.toLowerCase().includes(s) ||
       order.clients?.phone.includes(s) ||
       order.id.toLowerCase().includes(s) ||
@@ -133,23 +103,18 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        title="Orders"
+        subtitle={`${orders.length} total orders`}
+        action={
+          <Button variant="ghost" onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}>
+            {sortDir === 'desc' ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+            {sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
+          </Button>
+        }
+      />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Orders</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{orders.length} total orders</p>
-        </div>
-        <button
-          onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
-          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-500 hover:border-pink-300 transition"
-        >
-          {sortDir === 'desc' ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-          {sortDir === 'desc' ? 'Newest first' : 'Oldest first'}
-        </button>
-      </div>
-
-      {/* Search + Status filter */}
+      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -160,7 +125,6 @@ export default function OrdersPage() {
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white"
           />
         </div>
-
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
@@ -177,59 +141,35 @@ export default function OrdersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Client</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Phone</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Items</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Total</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Store</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Date</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400">Actions</th>
+                {['Client', 'Phone', 'Items', 'Total', 'Status', 'Store', 'Date', 'Actions'].map(h => (
+                  <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-400">{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">Loading...</td>
-                </tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">No orders found</td>
-                </tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">No orders found</td></tr>
               ) : filtered.map(order => (
                 <tr key={order.id} className="hover:bg-gray-50 transition">
-
-                  {/* Client name */}
-                  <td className="px-4 py-3.5 font-medium text-gray-700">
-                    {order.clients?.name ?? '—'}
-                  </td>
-
-                  {/* Phone → WhatsApp */}
+                  <td className="px-4 py-3.5 font-medium text-gray-700">{order.clients?.name ?? '—'}</td>
                   <td className="px-4 py-3.5">
                     {order.clients?.phone ? (
-                      <button
-                        onClick={() => openWhatsApp(order.clients!.phone)}
-                        className="flex items-center gap-1.5 text-green-600 hover:text-green-700 transition"
-                      >
+                      <button onClick={() => openWhatsApp(order.clients!.phone)}
+                        className="flex items-center gap-1.5 text-green-600 hover:text-green-700 transition">
                         <MessageCircle size={13} />
                         <span className="text-xs">{order.clients.phone}</span>
                       </button>
                     ) : '—'}
                   </td>
-
-                  {/* Items preview */}
                   <td className="px-4 py-3.5 text-gray-500 max-w-[140px]">
                     <span className="truncate block text-xs">{order.items ?? '—'}</span>
                   </td>
-
-                  {/* Total — inline editable */}
                   <td className="px-4 py-3.5">
                     {editingTotal === order.id ? (
                       <div className="flex items-center gap-1">
-                        <input
-                          autoFocus
-                          type="number"
-                          value={totalValue}
+                        <input autoFocus type="number" value={totalValue}
                           onChange={e => setTotalValue(e.target.value)}
                           onBlur={() => saveTotal(order.id)}
                           onKeyDown={e => e.key === 'Enter' && saveTotal(order.id)}
@@ -239,19 +179,12 @@ export default function OrdersPage() {
                         <span className="text-xs text-gray-400">MAD</span>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => {
-                          setEditingTotal(order.id)
-                          setTotalValue(order.total?.toString() ?? '')
-                        }}
-                        className="text-xs text-gray-600 hover:text-pink-500 transition font-medium"
-                      >
+                      <button onClick={() => { setEditingTotal(order.id); setTotalValue(order.total?.toString() ?? '') }}
+                        className="text-xs text-gray-600 hover:text-pink-500 transition font-medium">
                         {order.total ? `${order.total} MAD` : <span className="text-gray-300 italic">Add total</span>}
                       </button>
                     )}
                   </td>
-
-                  {/* Status dropdown */}
                   <td className="px-4 py-3.5">
                     <select
                       value={order.status}
@@ -259,61 +192,38 @@ export default function OrdersPage() {
                       onChange={e => updateStatus(order.id, e.target.value)}
                       className={`text-xs font-medium px-2 py-1 rounded-lg border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400 ${STATUS_COLORS[order.status]}`}
                     >
-                      {STATUSES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
+                      {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </td>
-
-                  {/* Store */}
+                  <td className="px-4 py-3.5 text-gray-400 text-xs">{order.store ?? '—'}</td>
                   <td className="px-4 py-3.5 text-gray-400 text-xs">
-                    {order.store ?? <span className="italic text-gray-300">—</span>}
+                    {new Date(order.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short' })}
                   </td>
-
-                  {/* Date */}
-                  <td className="px-4 py-3.5 text-gray-400 text-xs">
-                    {new Date(order.created_at).toLocaleDateString('en', {
-                      day: 'numeric', month: 'short'
-                    })}
-                  </td>
-
-                  {/* Actions */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/dashboard/orders/${order.id}`}
-                        className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-lg transition"
-                      >
-                        <Eye size={14} />
+                      <Link href={`/dashboard/orders/${order.id}`}>
+                        <Button variant="secondary" className="p-1.5">
+                          <Eye size={14} />
+                        </Button>
                       </Link>
-
                       {confirmDelete === order.id ? (
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => deleteOrder(order.id)}
-                            disabled={deletingId === order.id}
-                            className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs transition disabled:opacity-50"
-                          >
+                          <Button variant="primary" disabled={deletingId === order.id} className="text-xs px-2 py-1"
+                            onClick={() => deleteOrder(order.id)}>
                             {deletingId === order.id ? '...' : 'Yes'}
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(null)}
-                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs transition"
-                          >
+                          </Button>
+                          <Button variant="secondary" className="text-xs px-2 py-1"
+                            onClick={() => setConfirmDelete(null)}>
                             No
-                          </button>
+                          </Button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setConfirmDelete(order.id)}
-                          className="p-1.5 bg-red-50 hover:bg-red-100 text-red-400 rounded-lg transition"
-                        >
+                        <Button variant="danger" className="p-1.5" onClick={() => setConfirmDelete(order.id)}>
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </td>
-
                 </tr>
               ))}
             </tbody>
