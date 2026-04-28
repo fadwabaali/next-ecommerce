@@ -96,17 +96,20 @@ export default function OrderPage() {
     setLoading(true)
 
     try {
-      // 1. Insert client
+      // 1. Upsert client — insert or get existing by phone
       const { data: client, error: clientError } = await supabase
         .from('clients')
-        .insert({
+        .upsert(
+        {
           name: form.name,
           phone: form.phone,
           city: form.city,
           address: form.address,
-        })
-        .select()
-        .single()
+        },
+        { onConflict: 'phone' }
+      )
+      .select()
+      .single()
 
       if (clientError) throw clientError
 
