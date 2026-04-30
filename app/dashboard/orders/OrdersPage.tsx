@@ -55,7 +55,7 @@ export default function OrdersPage() {
       .from('orders')
       .select('id, status, total, store, items, created_at, clients(id, name, phone, city)')
       .order('created_at', { ascending: sortDir === 'asc' })
-    let result = (data as Order[]) || []
+    let result = (data as unknown as Order[]) || []
     if (clientFilter) result = result.filter(o => o.clients?.id === clientFilter)
     setOrders(result)
     setLoading(false)
