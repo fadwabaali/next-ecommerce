@@ -46,7 +46,7 @@ export default function DashboardPage() {
       .gte('created_at', from.toISOString())
       .order('created_at', { ascending: false })
 
-    setOrders((data as Order[]) || [])
+    setOrders((data as unknown as Order[]) || [])
     setLoading(false)
   }
 
