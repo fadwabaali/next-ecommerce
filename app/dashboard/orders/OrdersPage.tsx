@@ -9,6 +9,7 @@ import { STATUSES, openWhatsApp } from '@/lib/constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/layout/PageHeader'
+import Skeleton from '@/app/components/ui/Skeleton'
 
 type Order = {
   id: string
@@ -148,7 +149,7 @@ export default function OrdersPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <Skeleton rows={6} />
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-xs">No orders found</td></tr>
               ) : filtered.map(order => (

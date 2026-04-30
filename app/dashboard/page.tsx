@@ -8,6 +8,7 @@ import { STATUS_COLORS, STATUSES } from '@/lib/constants'
 import StatusBadge from './../components/ui/StatusBadge'
 import PageHeader from './../components/layout/PageHeader'
 import Button from './../components/ui/Button'
+import Skeleton from '../components/ui/Skeleton'
 
 const STAT_CARDS = [
   { key: 'NEW',       label: 'New orders', icon: ShoppingBag,  color: 'bg-blue-50 text-blue-600' },
@@ -150,7 +151,7 @@ export default function DashboardPage() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {loading ? (
-              <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">Loading...</td></tr>
+              <Skeleton rows={4} />
             ) : orders.length === 0 ? (
               <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-xs">No orders yet</td></tr>
             ) : orders.slice(0, 8).map(order => (

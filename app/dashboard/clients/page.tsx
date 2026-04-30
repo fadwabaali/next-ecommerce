@@ -7,6 +7,7 @@ import { openWhatsApp } from '@/lib/constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/layout/PageHeader'
+import Skeleton from '@/app/components/ui/Skeleton'
 
 type Client = {
   id: string
@@ -119,7 +120,7 @@ export default function ClientsPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-xs">Loading...</td></tr>
+                <Skeleton rows={6} />
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-xs">No clients found</td></tr>
               ) : filtered.map(client => {
